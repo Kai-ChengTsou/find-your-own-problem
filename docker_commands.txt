@@ -1,0 +1,2 @@
+docker build -t find-your-own-problem .
+docker run --env-file ../.env -p 8080:8080 -it find-your-own-problem
