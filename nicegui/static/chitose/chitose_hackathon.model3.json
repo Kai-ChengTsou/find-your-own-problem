@@ -1,0 +1,23 @@
+{
+	"Version": 3,
+	"FileReferences": {
+		"Moc": "chitose_hackathon.moc3",
+		"Textures": [
+			"chitose_hackathon.512/texture_00.png"
+		],
+		"Physics": "chitose_hackathon.physics3.json",
+		"DisplayInfo": "chitose_hackathon.cdi3.json"
+	},
+	"Groups": [
+		{
+			"Target": "Parameter",
+			"Name": "LipSync",
+			"Ids": []
+		},
+		{
+			"Target": "Parameter",
+			"Name": "EyeBlink",
+			"Ids": []
+		}
+	]
+}

@@ -1,6 +1,8 @@
-from nicegui import ui
+from nicegui import ui, app
 import json
 import boto3
+
+app.add_static_files('/static', '/app/static')
 
 # Initialize Bedrock client
 bedrock_client = boto3.client("bedrock-runtime", region_name="us-west-2")
@@ -43,11 +45,37 @@ def get_bedrock_response(history):
     response_body = response["body"].read().decode("utf-8")
     return json.loads(response_body)
 
+# Full page row
+with ui.row().classes('w-full h-[90vh]'):
 
-# Build UI
-ui.page_title("遊戲橘子 - VTuber AI 🎮")
+    # LEFT: Avatar (1/3 width)
+    with ui.column().classes('w-1/3 items-center justify-center'):
+        # Add the canvas container
+        ui.html('''
+        <div id="live2d-container" style="position:relative;width:300px;height:400px;">
+            <canvas id="live2d" width="300" height="400"></canvas>
+        </div>
+        ''')
 
-chat_area = ui.column().classes('w-full h-[80vh] overflow-auto p-4 bg-gray-100 rounded shadow')
+        # Load Live2D script
+        ui.add_body_html('''
+        <script src="https://cdn.jsdelivr.net/gh/stevenjoezhang/live2d-widget@latest/live2d.min.js"></script>
+        <script>
+        window.addEventListener("load", () => {
+            loadlive2d(
+                "live2d",
+                "https://cdn.jsdelivr.net/gh/evrstr/live2d-widget-models/live2d_evrstr/haru_seifuku/model.json",
+                null
+            );
+        });
+        </script>
+        ''')
+
+    # RIGHT: Chat (1/2 width)
+    with ui.column().classes('w-1/2 h-full p-4 bg-gray-100 rounded shadow overflow-auto'):
+        chat_area = ui.column().classes('w-full h-full')
+
+
 
 def send_message():
     text = user_input.value.strip()
