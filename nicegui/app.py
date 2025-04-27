@@ -2,12 +2,14 @@ from nicegui import ui, app
 import json
 import boto3
 import uuid
+import tempfile
+import os
 
 app.add_static_files('/static', '/app/static')
 
 # Initialize Bedrock Agent Runtime client
 bedrock_agent_client = boto3.client("bedrock-agent-runtime", region_name="us-west-2")
-
+polly_client = boto3.client('polly', region_name='us-west-2')
 # Session state
 conversation_history = []
 
@@ -37,6 +39,27 @@ def send_to_agent(user_input_text):
     except Exception as e:
         print(f"Error invoking agent: {e}")
         return "出錯了，請稍後再試！"
+
+def synthesize_speech(text, voice_id='Zhiyu'):
+    try:
+        # Call Amazon Polly to generate speech
+        response = polly_client.synthesize_speech(
+            Text=text,
+            VoiceId=voice_id,  # Choose voice ID like 'Zhiyu' (a young-sounding Chinese voice)
+            OutputFormat='mp3',
+            LanguageCode='cmn-CN'  # Mandarin Chinese
+        )
+
+        # Store the audio in a temporary file
+        temp_audio_file = tempfile.NamedTemporaryFile(delete=False, suffix='.mp3')
+        with open(temp_audio_file.name, 'wb') as audio_file:
+            audio_file.write(response['AudioStream'].read())
+
+        return temp_audio_file.name  # Return path to audio file
+
+    except Exception as e:
+        print(f"Error synthesizing speech: {e}")
+        return None
 
 
 # Full page row
@@ -69,6 +92,7 @@ with ui.row().classes('w-full h-full'):
     with ui.column().classes('w-1/2 h-full p-4 bg-gray-100 rounded shadow overflow-auto'):
         chat_area = ui.column().classes('w-full h-full')
 
+ui.add_css('body { background-color: #f4f4f4; }')
 
 def send_message():
     text = user_input.value.strip()
@@ -100,7 +124,22 @@ def send_message():
     with chat_area:
         ui.chat_message(ai_message, sent=False).classes('self-start bg-white text-black') 
 
+    # Synthesize speech using Amazon Polly
+    audio_file = synthesize_speech(ai_message, voice_id='Zhiyu')  # 'Zhiyu' is a young Chinese female voice
 
+    # If audio was generated, send it to the frontend to be played
+    if audio_file:
+        ui.add_body_html(f'''
+        <audio id="ai-speech" controls autoplay>
+            <source src="/static/{os.path.basename(audio_file)}" type="audio/mp3">
+            Your browser does not support the audio element.
+        </audio>
+        ''')
+
+        # Move the generated file to the static folder
+        os.rename(audio_file, f"/app/static/{os.path.basename(audio_file)}")
+
+        
 # Input field and button
 with ui.row().classes('w-full p-2'):
     user_input = ui.input(placeholder='輸入你的訊息...').classes('w-4/5')

@@ -3,4 +3,5 @@ nicegui>=1.4.17
 boto3>=1.34.0
 botocore>=1.34.0
 uuid
+
 requests>=2.31.0
